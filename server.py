@@ -2,9 +2,10 @@ import socket
 import select #grants OS operations with interoperability between operating systems
 
 ###configure here
-HEADER_LENGTH = 10
-IP = "127.0.0.1"
-PORT = 1234
+HEADER_LENGTH = 64
+IP = '192.168.1.80'
+PORT = 5051
+FORMAT = 'utf-8'
 
 #set the server socket
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #stream socket of Internet domain
@@ -43,11 +44,11 @@ while True:
 			if user is False: #disconnected user
 				continue
 
-			sockets_list.append(clients_socket)
+			sockets_list.append(client_socket)
 			clients[client_socket] = user
 
 			print(f"Started new connection from {client_address[0]}:{client_address[1]} username#stream socket to comunnicate over the internet:{user['data'].decode('utf-8')}")
-		
+
 		else:
 			message = receive_message(notified_socket)
 
