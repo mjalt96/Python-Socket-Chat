@@ -8,6 +8,7 @@ Just for fun.
 * Remember about sockets low-level functioning in C.
 * Learn about sockets in Python.
 * Practice Python.
+* Work with threads.
 * Learn about GUI's in Python.
 * Learn about code security in Python.
 * Have fun.

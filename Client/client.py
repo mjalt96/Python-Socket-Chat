@@ -3,18 +3,19 @@ import select
 import errno 
 import sys
 
-###configure here along the server
+###SERVER CONFIGURATION###
 HEADER_LENGTH = 64
+HOST = "192.168.1.80"
 PORT = 5051
+ADDR = (HOST,PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
-HOST = "192.168.1.80"
 
 my_username = input("Please insert a username: ")
 
-#create socket and connect
+#create socket
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect((HOST,PORT))
+client_socket.connect(ADDR)
 client_socket.setblocking(False) #set recv method to not block
 
 #set username and send it on the header
@@ -60,16 +61,3 @@ while True:
 	except Exception as e:
 		print('General error: {}'.format(str(e)))
 		sys.exit()
-
-# def send(msg):
-# 	message = msg.encode(FORMAT)
-# 	msg_length = len(message)
-# 	send_length = str(msg_length).encode(FORMAT)
-
-# 	#pad the message to the header length with byte 'space'
-# 	send_length += b' ' * (HEADER - len(send_length))
-
-# 	client_socket.send(send_length)
-# 	client_socket.send(message)
-
-#send(input("Message: "))
