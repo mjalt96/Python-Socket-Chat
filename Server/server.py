@@ -1,6 +1,9 @@
 import socket 
-import select #grants OS operations with interoperability between operating systems
+import select #grants OS interoperability for the sockets
 import random
+import os
+from pathlib import Path
+from datetime import datetime
 from threading import Thread
 
 ###SERVER CONFIGURATION###
@@ -11,32 +14,43 @@ ADDR = (HOST, PORT)
 FORMAT = 'utf-8'
 
 clients = {}
-messages = {}
-user_messages = []
+messages = []
+users = []
+
 
 class Message:
 
-	location_folder = "./userdata/messages/"
+	location_dir =  f'{os.getcwd()}\\userdata\\messages\\'
+	messages_dict = {}
 
-	def __init__(self, uid, datestamp, date, message):
+
+	def __init__(self, uid="", datestamp="", date="", message=""):
 		self.uid = uid
-		self.location = f'{self.location_folder}/{uid}/{date}.txt'
-		self.messages = {datestamp:message} #dictionary
+		self.location = f'{self.location_dir}{uid}'
+		self.date = date
+		if message != "":
+			self.messages_dict[datestamp] = message
 	
-	def add_message(self, datestamp, message):
-		self.messages.update({datestamp,message})
-	
-	def save_messages(self, messages):
+
+	#guarda as mensagens localmente
+	def save_messages(self):
 		try:
-			f = open(self.location, "a")
-			for dtstamp, msg in self.messages.items():
+			path = self.location
+			directory = Path(path)
+			directory.mkdir(exist_ok=True)
+			f = open(f'{self.location}\\{self.date}', "a")
+			for dtstamp, msg in self.messages_dict.items():
 				f.write(f'\n\n#{dtstamp}\n{msg}')
+		except FileExistsError as e:
+			print(e)
 		except OSError as e:
 			print(e)
 		except Exception as e:
 			print(e)
 		else:
 			f.close()
+
+	#TO-DO: CREATE A METHOD FOR CLOUD BACKUP ON AWS
 
 
 #set the server socket
@@ -84,6 +98,13 @@ while True:
 
 			sockets_list.append(client_socket)
 			clients[client_socket] = user
+			
+			#handle user
+			#TO DO: Use classes to handle users and create cookies stored on the client side
+			username = user['data'].decode(FORMAT)
+			if username not in users:
+				uid = username + str(random.randint(100000,999999))
+				users.append({uid, username})
 
 			print('Accepted new connection from {}:{}, username: {}'.format(*client_address, user['data'].decode(FORMAT)))
 
@@ -95,15 +116,15 @@ while True:
 				sockets_list.remove(notified_socket)
 				del clients[notified_socket]
 				continue
+			else:
+				dt = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+				date = datetime.now().strftime('%Y_%m_%d')
 
 			#handle message data
 			user = clients[notified_socket]
 			msg = message['data'].decode(FORMAT)
-			username = user['data'].decode(FORMAT)
-			#TO DO: VERIFY IF UID EXISTS
-			uid = username + str(random.randint(100000,999999))
-			user_messages.append(msg)
-			messages[uid] = user_messages.copy()
+			msg_obj = Message(uid,dt,date,message)
+			msg_obj.save_messages()
 
 			print(f"Received message from {username}: {msg}")
 
@@ -113,4 +134,6 @@ while True:
 
 	for notified_socket in exception_sockets:
 		sockets_list.remove(notified_socket)
-		del clients[notified_socket]				
+		del clients[notified_socket]
+
+	#TO-DO: USE THREADS INSTEAD TO SAVE FROM TIME TO TIME
