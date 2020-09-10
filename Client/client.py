@@ -1,27 +1,42 @@
+#!/usr/bin/python3
+
 import socket
 import select 
 import errno 
+import random
 import sys
 
 ###SERVER CONFIGURATION###
 HEADER_LENGTH = 64
-HOST = "192.168.1.80"
+ADDR_LIST = socket.gethostbyname_ex(socket.gethostname())[2]
+HOST = ADDR_LIST[len(ADDR_LIST)-1] #last address from list
 PORT = 5051
 ADDR = (HOST,PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
 
+first = True
+
 my_username = input("Please insert a username: ")
+
+#identification
+users = my_username # change to read from file
+if my_username not in users:
+	uid = my_username + str(random.randint(100000,999999))
+else:
+	uid = "834423" #read from file
 
 #create socket
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect(ADDR)
 client_socket.setblocking(False) #set recv method to not block
 
-#set username and send it on the header
-username = my_username.encode(FORMAT)
-username_header = f'{len(username):<{HEADER_LENGTH}}'.encode(FORMAT)
-client_socket.send(username_header + username)
+#send the username and user id on the header before the actual communication
+client_id = f'{my_username} {uid}'
+initial_data = client_id.encode(FORMAT)
+username_header = f'{len(initial_data):<{HEADER_LENGTH}}'.encode(FORMAT)
+client_socket.send(username_header + initial_data)
+
 
 while True:
 	message = input(f'{my_username} > ')
@@ -42,6 +57,8 @@ while True:
 
 			username_length = int(username_header.decode(FORMAT).strip())
 			username = client_socket.recv(username_length).decode(FORMAT)
+			aux = username.split(" ")
+			username = ' '.join(aux[:len(aux)-1])
 
 			message_header = client_socket.recv(HEADER_LENGTH)
 			message_length = int(message_header.decode(FORMAT).strip())

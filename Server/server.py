@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import socket 
 import select #grants OS interoperability for the sockets
 import random
@@ -10,7 +12,8 @@ from threading import Thread
 
 ###SERVER CONFIGURATION###
 HEADER_LENGTH = 64
-HOST = '192.168.1.80'
+ADDR_LIST = socket.gethostbyname_ex(socket.gethostname())[2] #avoid getting wrong host
+HOST = ADDR_LIST[len(ADDR_LIST)-1] #last address from list
 PORT = 5051
 ADDR = (HOST, PORT)
 FORMAT = 'utf-8'
@@ -22,17 +25,18 @@ users = []
 
 class Message:
 
-	location_dir =  f'{os.getcwd()}\\userdata\\messages\\'
-	messages_dict = {}
-
+	dir =  f'{os.getcwd()}\\messages\\'
 
 	def __init__(self, uid="", datestamp="", date="", message=""):
 		self.uid = uid
-		self.location = f'{self.location_dir}{uid}'
+		self.path = f'{self.dir}{date}'
 		self.date = date
 		if message != "":
-			self.messages_dict[datestamp] = message
+			self.message = message
+			self.datestamp = datestamp
+			self.__save_messages()
 	
+	"""
 	#private method to check if user file exists
 	#returns true or false
 	def __search_user_file(self, username):
@@ -43,18 +47,17 @@ class Message:
 				self.uid = str(res[0][0]) + str(res[0][1])
 				return 1
 			else:
-				return -1
+				return -1"""
 
 
-	#saves messages locally
-	def save_messages(self):
+	#private mathod that saves messages locally
+	def __save_messages(self):
 		try:
-			path = self.location
-			directory = Path(path)
-			directory.mkdir(exist_ok=True)
-			f = open(f'{self.location}\\{self.date}', "a")
-			for dtstamp, msg in self.messages_dict.items():
-				f.write(f'\n\n#{dtstamp}\n{msg}')
+			directory = Path(self.path)
+			directory.mkdir(mode = 0o664, exist_ok=True)
+			num_files = len([name for name in os.listdir(directory) if os.path.isfile(name)])
+			f = open(f'{self.path}\\{num_files + 1}.txt', "a+")
+			f.write(f'\n\n#{self.datestamp}\n{self.uid}\n{self.message}')
 		except FileExistsError as e:
 			print(e)
 		except OSError as e:
@@ -64,14 +67,14 @@ class Message:
 		else:
 			f.close()
 
-	#obtains messages from a corresponding file
+	""" #obtains messages from a corresponding file
 	def get_messages(self, username):
 		if self.__search_user_file(username) == 1:
 			file_list = [file for file in glob(self.location + "*", recursive=False)]
 			for f in file_list:
 				s = open(f, "r")
 				print(s)
-				s.close()
+				s.close() """
 
 
 	#Special methods
@@ -87,8 +90,19 @@ class User(Message):
 		Message.__init__(self)
 		self.uid = uid
 		self.username = username
-		self.get_messages(username)
 
+
+#check if messages directory exists
+msg_dir = Path(f'{os.getcwd()}\\messages')
+if os.path.exists(msg_dir) == False:
+	try:
+		msg_dir.mkdir(mode = 0o664, exist_ok=True)	
+	except FileExistsError as e:
+		print(e)
+	except OSError as e:
+		print(e)
+	except Exception as e:
+		print(e)
 
 #set the server socket
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #stream socket of Internet domain
@@ -132,24 +146,24 @@ while True:
 			if user is False:
 				#disconnected user
 				continue
-
+			
 			sockets_list.append(client_socket)
 			clients[client_socket] = user
-			
-			#handle user
-			#TO DO: Use classes to handle users and create cookies stored on the client side
-			username = user['data'].decode(FORMAT)
-			user_obj = User()
-			if username not in users:
-				if user_obj.uid == 0:
-					uid = username + str(random.randint(100000,999999))
-					users.append({uid, username})
-				else:
-					uid = user_obj.uid
-					users.append({uid, username})
-				
 
-			print('Accepted new connection from {}:{}, username: {}'.format(*client_address, user['data'].decode(FORMAT)))
+			#handle user
+			initial_data = user['data'].decode(FORMAT)
+			uid = (initial_data.split(" "))[-1]
+			aux = initial_data.split(" ")
+			username = ' '.join(aux[:len(aux)-1])
+			user_obj = User()
+			user_obj.uid = uid
+			user_obj.username = username
+			for u in users:
+				if u.uid == user_obj.uid:
+					user_obj.uid == u.uid
+			users.append(user_obj)					
+
+			print('Accepted new connection from {}:{}, username: {}'.format(*client_address, username))
 
 		else:
 			message = receive_message(notified_socket)
@@ -166,8 +180,9 @@ while True:
 			#handle message data
 			user = clients[notified_socket]
 			msg = message['data'].decode(FORMAT)
-			msg_obj = Message(uid,dt,date,message)
-			msg_obj.save_messages()
+			msg_obj = Message(uid,dt,date,msg)
+			aux = user['data'].decode(FORMAT).split(" ")
+			username = ' '.join(aux[:len(aux)-1])
 
 			print(f"Received message from {username}: {msg}")
 
