@@ -2,6 +2,8 @@ import socket
 import select #grants OS interoperability for the sockets
 import random
 import os
+import re
+from glob import glob
 from pathlib import Path
 from datetime import datetime
 from threading import Thread
@@ -31,8 +33,20 @@ class Message:
 		if message != "":
 			self.messages_dict[datestamp] = message
 	
+	#private method to check if user file exists
+	#returns true or false
+	def __search_user_file(self, username):
+		file_list = [file for file in glob(self.location + "*", recursive=False)]
+		for f in file_list:
+			res = [re.findall(r'(\w+?)(\d+)', f)[0]]
+			if res:
+				self.uid = str(res[0][0]) + str(res[0][1])
+				return 1
+			else:
+				return -1
 
-	#guarda as mensagens localmente
+
+	#saves messages locally
 	def save_messages(self):
 		try:
 			path = self.location
@@ -50,7 +64,30 @@ class Message:
 		else:
 			f.close()
 
+	#obtains messages from a corresponding file
+	def get_messages(self, username):
+		if self.__search_user_file(username) == 1:
+			file_list = [file for file in glob(self.location + "*", recursive=False)]
+			for f in file_list:
+				s = open(f, "r")
+				print(s)
+				s.close()
+
+
+	#Special methods
+	#def __del__(self): #use if save on deletion
+		#self.save_messages()
+
 	#TO-DO: CREATE A METHOD FOR CLOUD BACKUP ON AWS
+
+
+class User(Message):
+	
+	def __init__(self, uid=0, username=""):
+		Message.__init__(self)
+		self.uid = uid
+		self.username = username
+		self.get_messages(username)
 
 
 #set the server socket
@@ -102,9 +139,15 @@ while True:
 			#handle user
 			#TO DO: Use classes to handle users and create cookies stored on the client side
 			username = user['data'].decode(FORMAT)
+			user_obj = User()
 			if username not in users:
-				uid = username + str(random.randint(100000,999999))
-				users.append({uid, username})
+				if user_obj.uid == 0:
+					uid = username + str(random.randint(100000,999999))
+					users.append({uid, username})
+				else:
+					uid = user_obj.uid
+					users.append({uid, username})
+				
 
 			print('Accepted new connection from {}:{}, username: {}'.format(*client_address, user['data'].decode(FORMAT)))
 
