@@ -10,8 +10,9 @@ from pathlib import Path
 from datetime import datetime
 from threading import Thread
 
-###SERVER CONFIGURATION###
+# GLOBAL VARIABLES
 HEADER_LENGTH = 64
+MAX_CONNECTIONS = 20
 ADDR_LIST = socket.gethostbyname_ex(socket.gethostname())[2] #avoid getting wrong host
 HOST = ADDR_LIST[len(ADDR_LIST)-1] #last address from list
 PORT = 5051
@@ -24,7 +25,9 @@ users = []
 
 
 class Message:
-
+	"""
+	Class that represents a user message
+	"""
 	dir =  f'{os.getcwd()}\\messages\\'
 
 	def __init__(self, uid="", datestamp="", date="", message=""):
@@ -63,35 +66,30 @@ class Message:
 
 
 class User(Message):
-	
+	"""
+	Class that represents a user
+	"""
 	def __init__(self, uid=0, username=""):
 		Message.__init__(self)
 		self.uid = uid
 		self.username = username
-		
 
-#check if messages directory exists
-msg_dir = Path(f'{os.getcwd()}\\messages')
-if os.path.exists(msg_dir) == False:
-	try:
-		msg_dir.mkdir(mode = 0o664, exist_ok=True)	
-	except FileExistsError as e:
-		print(e)
-	except OSError as e:
-		print(e)
-	except Exception as e:
-		print(e)
 
-#set the server socket
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #stream socket of Internet domain
-server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #allow to reconnect
-
-server_socket.bind(ADDR)
-server_socket.listen()
-
-sockets_list = [server_socket]
-
-print(f'Listening for connections on {HOST}:{PORT}...')
+def check_directories():
+	"""
+	Function that checks for needed directories and files creating if needed
+	"""
+	#check if "messages" directory exists
+	msg_dir = Path(f'{os.getcwd()}\\messages')
+	if os.path.exists(msg_dir) == False:
+		try:
+			msg_dir.mkdir(mode = 0o664, exist_ok=True)	
+		except FileExistsError as e:
+			print(e)
+		except OSError as e:
+			print(e)
+		except Exception as e:
+			print(e)
 
 
 def receive_message(client_socket):
@@ -112,8 +110,10 @@ def receive_message(client_socket):
 		return False
 
 
-#establish communication
-while True:
+def handle_communication(server_socket, sockets_list):
+	"""
+	Function that handles the communication between server and clients
+	"""
 	#blocking call
 	read_sockets, _, exception_sockets = select.select(sockets_list, [], 
 	sockets_list)
@@ -163,6 +163,7 @@ while True:
 
 			#handle message data
 			user = clients[notified_socket]
+			uid = (user['data'].decode(FORMAT).split(" "))[-1]
 			msg = message['data'].decode(FORMAT)
 			msg_obj = Message(uid,dt,date,msg)
 			aux = user['data'].decode(FORMAT).split(" ")
@@ -180,3 +181,22 @@ while True:
 		del clients[notified_socket]
 
 	#TO-DO: USE THREADS INSTEAD TO SAVE FROM TIME TO TIME
+
+
+if __name__ == "__main__":
+	check_directories()
+
+	#set the server socket
+	server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #stream socket of Internet domain
+	server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #allow to reconnect
+	server_socket.bind(ADDR)
+
+	#start listening for connections
+	server_socket.listen(MAX_CONNECTIONS)
+	print(f'Listening for connections on {HOST}:{PORT}...')
+
+	sockets_list = [server_socket]
+
+	while True:
+		#handle communications
+		handle_communication(server_socket, sockets_list)
