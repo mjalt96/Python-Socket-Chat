@@ -35,29 +35,21 @@ class Message:
 			self.message = message
 			self.datestamp = datestamp
 			self.__save_messages()
-	
-	"""
-	#private method to check if user file exists
-	#returns true or false
-	def __search_user_file(self, username):
-		file_list = [file for file in glob(self.location + "*", recursive=False)]
-		for f in file_list:
-			res = [re.findall(r'(\w+?)(\d+)', f)[0]]
-			if res:
-				self.uid = str(res[0][0]) + str(res[0][1])
-				return 1
-			else:
-				return -1"""
 
 
-	#private mathod that saves messages locally
 	def __save_messages(self):
+		"""
+		Private method that saves messages locally
+		"""
 		try:
 			directory = Path(self.path)
 			directory.mkdir(mode = 0o664, exist_ok=True)
-			num_files = len([name for name in os.listdir(directory) if os.path.isfile(name)])
+			num_files = len([name for name in os.listdir(directory) 
+			if os.path.isfile(name)])
+
 			f = open(f'{self.path}\\{num_files + 1}.txt', "a+")
 			f.write(f'\n\n#{self.datestamp}\n{self.uid}\n{self.message}')
+
 		except FileExistsError as e:
 			print(e)
 		except OSError as e:
@@ -66,20 +58,6 @@ class Message:
 			print(e)
 		else:
 			f.close()
-
-	""" #obtains messages from a corresponding file
-	def get_messages(self, username):
-		if self.__search_user_file(username) == 1:
-			file_list = [file for file in glob(self.location + "*", recursive=False)]
-			for f in file_list:
-				s = open(f, "r")
-				print(s)
-				s.close() """
-
-
-	#Special methods
-	#def __del__(self): #use if save on deletion
-		#self.save_messages()
 
 	#TO-DO: CREATE A METHOD FOR CLOUD BACKUP ON AWS
 
@@ -90,7 +68,7 @@ class User(Message):
 		Message.__init__(self)
 		self.uid = uid
 		self.username = username
-
+		
 
 #check if messages directory exists
 msg_dir = Path(f'{os.getcwd()}\\messages')
@@ -116,8 +94,10 @@ sockets_list = [server_socket]
 print(f'Listening for connections on {HOST}:{PORT}...')
 
 
-"""Function that handles received messages"""
 def receive_message(client_socket):
+	"""
+	Function that handles received messages from a particular socket
+	"""
 	try:
 		message_header = client_socket.recv(HEADER_LENGTH)
 
@@ -125,7 +105,9 @@ def receive_message(client_socket):
 			return False
 
 		message_length = int(message_header.decode(FORMAT).strip())
-		return {"header": message_header, "data": client_socket.recv(message_length)}
+
+		return {"header": message_header, 
+		"data": client_socket.recv(message_length)}
 	except:
 		return False
 
@@ -133,7 +115,8 @@ def receive_message(client_socket):
 #establish communication
 while True:
 	#blocking call
-	read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list)
+	read_sockets, _, exception_sockets = select.select(sockets_list, [], 
+	sockets_list)
 
 	#handle users
 	for notified_socket in read_sockets:
@@ -163,7 +146,8 @@ while True:
 					user_obj.uid == u.uid
 			users.append(user_obj)					
 
-			print('Accepted new connection from {}:{}, username: {}'.format(*client_address, username))
+			print('Accepted new connection from {}:{}, username: {}'.format(
+				*client_address, username))
 
 		else:
 			message = receive_message(notified_socket)
@@ -188,7 +172,8 @@ while True:
 
 			for client_socket in clients:
 				if client_socket != notified_socket:
-					client_socket.send(user['header'] + user['data'] + message['header'] + message['data'])
+					client_socket.send(user['header'] + 
+					user['data'] + message['header'] + message['data'])
 
 	for notified_socket in exception_sockets:
 		sockets_list.remove(notified_socket)
