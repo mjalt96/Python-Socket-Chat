@@ -6,7 +6,7 @@ import errno
 import random
 import sys
 
-###SERVER CONFIGURATION###
+# GLOBAL VARIABLES
 HEADER_LENGTH = 64
 ADDR_LIST = socket.gethostbyname_ex(socket.gethostname())[2]
 HOST = ADDR_LIST[len(ADDR_LIST)-1] #last address from list
@@ -15,8 +15,7 @@ ADDR = (HOST,PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
 
-first = True
-
+#request username beforehand
 my_username = input("Please insert a username: ")
 
 #identification
@@ -39,6 +38,7 @@ client_socket.send(username_header + initial_data)
 
 
 while True:
+	#read user input
 	message = input(f'{my_username} > ')
 
 	if message:
@@ -55,11 +55,13 @@ while True:
 				print("Connection closed by the server.")
 				sys.exit()
 
+			#get username from received message
 			username_length = int(username_header.decode(FORMAT).strip())
 			username = client_socket.recv(username_length).decode(FORMAT)
 			aux = username.split(" ")
 			username = ' '.join(aux[:len(aux)-1])
-
+			
+			#get the rest of the message
 			message_header = client_socket.recv(HEADER_LENGTH)
 			message_length = int(message_header.decode(FORMAT).strip())
 			message = client_socket.recv(message_length).decode(FORMAT)
@@ -74,7 +76,9 @@ while True:
 
 		continue
 
-	#any other exception
+	except KeyboardInterrupt:
+		print("Connection closed by Keyboard.")
+
 	except Exception as e:
 		print('General error: {}'.format(str(e)))
 		sys.exit()
