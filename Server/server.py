@@ -14,7 +14,7 @@ from threading import Thread
 HEADER_LENGTH = 64
 MAX_CONNECTIONS = 20
 ADDR_LIST = socket.gethostbyname_ex(socket.gethostname())[2] #avoid getting wrong host
-HOST = ADDR_LIST[len(ADDR_LIST)-1] #last address from list
+HOST = ADDR_LIST[-1] #last address from list
 PORT = 5051
 ADDR = (HOST, PORT)
 FORMAT = 'utf-8'

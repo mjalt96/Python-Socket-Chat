@@ -12,7 +12,7 @@ from pathlib import Path
 # GLOBAL VARIABLES
 HEADER_LENGTH = 64
 ADDR_LIST = socket.gethostbyname_ex(socket.gethostname())[2]
-HOST = ADDR_LIST[len(ADDR_LIST)-1] #last address from list
+HOST = ADDR_LIST[-1] #last address from list
 PORT = 5051
 ADDR = (HOST,PORT)
 FORMAT = 'utf-8'
