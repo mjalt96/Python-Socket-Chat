@@ -21,36 +21,6 @@ PATH = '\\AppData\\Local\\Temp'
 UID = ''
 
 
-def calculate_last_login(current_datetime, last_datetime):
-	"""
-	Function that calculates the last user login given two datetime
-	"""
-	if current_datetime.year != last_datetime.year:
-		#year difference
-		diff = abs(current_datetime.month - last_datetime.month)
-		if diff >= 11:
-			last_login = str(abs(current_datetime.year - last_datetime.year)) + " year(s) ago."
-		else:
-			last_login = str(abs(current_datetime.year - last_datetime.year)) + " years and " + diff + " month(s) ago." 
-	else:
-		#same year
-		if current_datetime.month != last_datetime.month:
-			#month difference
-			day_diff = abs(current_datetime.day - last_datetime.day)
-			if diff > 25:
-				last_login = str(abs(current_datetime.month - last_datetime.month)) + " month(s) ago."
-			else:
-				last_login = day_diff + " day(s) ago."
-		else:
-			#same month
-			day_diff = abs(current_datetime.day - last_datetime.day)
-			if day_diff == 0:
-				last_login = " today."
-			else:
-				last_login = str(day_diff) + " day(s) ago."
-	return last_login
-
-
 def check_user_file():
 	"""
 	Function that checks the existence of a local file for the user
@@ -71,7 +41,7 @@ def check_user_file():
 			dt_today = datetime.now()
 
 			#get last login
-			last_login = calculate_last_login(dt_today, dt)
+			last_login = str((dt_today - dt).days) + " days(s) ago."
 					
 			print('Welcome back!\nYour previous username: ', previous_username)
 			print("Your last login was: {}\n\n".format(last_login))
