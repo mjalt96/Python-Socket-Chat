@@ -1,13 +1,14 @@
 #!/usr/bin/python3
 
-import socket 
-import select #grants OS interoperability for the sockets
-import random
 import os
+import random
 import re
+import select  # grants OS interoperability for the sockets
+import socket
+import time
+from datetime import datetime
 from glob import glob
 from pathlib import Path
-from datetime import datetime
 from threading import Thread
 
 # GLOBAL VARIABLES
@@ -112,7 +113,7 @@ def receive_message(client_socket):
 
 def handle_communication(server_socket, sockets_list):
 	"""
-	Function that handles the communication between server and clients
+	Thread function that handles the communication between server and clients
 	"""
 	#blocking call
 	read_sockets, _, exception_sockets = select.select(sockets_list, [], 
@@ -126,6 +127,7 @@ def handle_communication(server_socket, sockets_list):
 			client_socket, client_address = server_socket.accept()
 
 			user = receive_message(client_socket)
+			
 			if user is False:
 				#disconnected user
 				continue
@@ -146,8 +148,8 @@ def handle_communication(server_socket, sockets_list):
 					user_obj.uid == u.uid
 			users.append(user_obj)					
 
-			print('Accepted new connection from {}:{}, username: {}'.format(
-				*client_address, username))
+			print('Accepted new connection from {}:{}, username: {}\nTime: {}'.format(
+				*client_address, username, time.ctime(time.time())))
 
 		else:
 			message = receive_message(notified_socket)
@@ -198,5 +200,8 @@ if __name__ == "__main__":
 	sockets_list = [server_socket]
 
 	while True:
-		#handle communications
-		handle_communication(server_socket, sockets_list)
+		ACCEPT_THREAD = Thread(target=handle_communication, args=(server_socket,sockets_list))
+		ACCEPT_THREAD.start()
+		ACCEPT_THREAD.join()
+	
+	server_socket.close()
