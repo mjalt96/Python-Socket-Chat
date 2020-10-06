@@ -1,13 +1,10 @@
 #!/usr/bin/python3
 
 import os
-import random
-import re
 import select  # grants OS interoperability for the sockets
 import socket
 import time
 from datetime import datetime
-from glob import glob
 from pathlib import Path
 from threading import Thread
 
@@ -100,7 +97,7 @@ def receive_message(client_socket):
 	try:
 		message_header = client_socket.recv(HEADER_LENGTH)
 
-		if not len(message_header):
+		if len(message_header) == 0:
 			return False
 
 		message_length = int(message_header.decode(FORMAT).strip())
@@ -143,9 +140,6 @@ def handle_communication(server_socket, sockets_list):
 			user_obj = User()
 			user_obj.uid = uid
 			user_obj.username = username
-			for u in users:
-				if u.uid == user_obj.uid:
-					user_obj.uid == u.uid
 			users.append(user_obj)					
 
 			print('Accepted new connection from {}:{}, username: {}\nTime: {}'.format(
@@ -167,7 +161,7 @@ def handle_communication(server_socket, sockets_list):
 			user = clients[notified_socket]
 			uid = (user['data'].decode(FORMAT).split(" "))[-1]
 			msg = message['data'].decode(FORMAT)
-			msg_obj = Message(uid,dt,date,msg)
+			Message(uid,dt,date,msg)
 			aux = user['data'].decode(FORMAT).split(" ")
 			username = ' '.join(aux[:len(aux)-1])
 

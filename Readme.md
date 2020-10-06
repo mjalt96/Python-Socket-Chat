@@ -20,6 +20,8 @@ Final Capstone Project from this [Udemy Course](https://www.udemy.com/course/com
 
 :heavy_check_mark: Handle multiple clients with the capaticity to continuously send and receive messages during a session. :heavy_check_mark:
 
-:heavy_check_mark: Use threads. :heavy_check_mark:
-* Create a GUI. 
-* Make the code more secure.
+:heavy_check_mark: Use threads. :heavy_check_mark: 
+
+:heavy_check_mark: Make the code more secure. :heavy_check_mark:
+
+Create a GUI w/ Flask.
